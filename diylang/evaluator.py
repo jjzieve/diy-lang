@@ -47,6 +47,11 @@ def evaluate(ast, env):
             return rest[0]
         if first == 'atom':
             return is_atom(evaluate(rest, env))
+        if first == 'if':
+            if evaluate(rest[0], env):
+                return evaluate(rest[1], env)
+            return evaluate(rest[2], env) 
+
         if first == 'eq': # assumes 2 args to arithmetic and eq operators
             x = evaluate(rest[0], env)
             y = evaluate(rest[1], env)
