@@ -14,7 +14,6 @@ making your work a bit easier. (We're supposed to get through this thing
 in a day, after all.)
 """
 
-operators = ['+', '-', '/', '*', 'mod', '>']
 def equal(rest, env):
     # assumes 2 args
     x = evaluate(rest[0], env)
@@ -73,30 +72,32 @@ def diy_lambda(rest, env):
     params = rest[0]
     body = rest[1]
     return Closure(env, params, body)
+
+operators = ['+', '-', '/', '*', 'mod', '>']
+def evaluate_list(ast, env):
+    if len(ast) == 0:
+        return ast
+    first, rest = ast[0], ast[1:]
+    if first == 'lambda':
+        return diy_lambda(rest, env)
+    if first == 'define':
+        return define(rest, env)
+    if first == 'quote':
+        return quote(rest)
+    if first == 'atom':
+        return atom(rest, env)
+    if first == 'if':
+        return control(rest, env)
+    if first == 'eq':
+        return equal(rest, env)
+    if first in operators:
+        return arithmetic(first, rest, env)
+    return evaluate(first, env)
             
 def evaluate(ast, env):
     """Evaluate an Abstract Syntax Tree in the specified environment."""
     if is_list(ast):
-        if len(ast) == 0:
-            return ast
-        first, rest = ast[0], ast[1:]
-        if first == 'lambda':
-            return diy_lambda(rest, env)
-        if first == 'define':
-           return define(rest, env)
-        if first == 'quote':
-            return quote(rest)
-        if first == 'atom':
-            return atom(rest, env)
-        if first == 'if':
-            return control(rest, env)
-        if first == 'eq':
-            return equal(rest, env)
-        if first in operators:
-            return arithmetic(first, rest, env)
-        return evaluate(first, env)
-    if is_symbol(ast) and not is_boolean(ast):
+       return evaluate_list(ast, env)
+    if is_symbol(ast) and not is_boolean(ast): # variable
         return env.lookup(ast)
     return ast
-
-
