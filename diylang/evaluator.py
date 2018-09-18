@@ -64,7 +64,10 @@ def quote(rest):
 def atom(rest, env):
     return is_atom(evaluate(rest, env))
 
-def diy_lambda(rest, env):
+def evaluate_closure(closure):
+    return evaluate(closure.body, closure.env)
+
+def create_closure(rest, env):
     if len(rest) != 2:
         raise DiyLangError('incorrect number of arguments')
     if not is_list(rest[0]):
@@ -79,7 +82,7 @@ def evaluate_list(ast, env):
         return ast
     first, rest = ast[0], ast[1:]
     if first == 'lambda':
-        return diy_lambda(rest, env)
+        return create_closure(rest, env)
     if first == 'define':
         return define(rest, env)
     if first == 'quote':
@@ -92,6 +95,8 @@ def evaluate_list(ast, env):
         return equal(rest, env)
     if first in operators:
         return arithmetic(first, rest, env)
+    if is_closure(first):
+        return evaluate_closure(first)
     return evaluate(first, env)
             
 def evaluate(ast, env):
