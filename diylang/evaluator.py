@@ -15,12 +15,19 @@ in a day, after all.)
 """
 
 operators = ['+', '-', '/', '*', 'mod', '>']
-def equal(x, y):
+def equal(rest, env):
+    # assumes 2 args
+    x = evaluate(rest[0], env)
+    y = evaluate(rest[1], env)
     if not is_atom(x) or not is_atom(y):
         return False
     return x == y
 
-def arithmetic(x, y, op):
+def arithmetic(first, rest, env):
+    op = first
+    # assumes 2 args x, y
+    x = evaluate(rest[0], env)
+    y = evaluate(rest[1], env)
     if not is_integer(x) or not is_integer(y):
         raise DiyLangError('One or more inputs are not Integers')
     if op == '+':
@@ -35,35 +42,50 @@ def arithmetic(x, y, op):
         return x % y
     if op == '>':
         return x > y
-    raise DiyLangError('Operator {0} not supported' % op)
+    raise DiyLangError('Operator {0} not supported'.format(op))
 
+def define(rest, env):
+    if len(rest) != 2:
+        raise DiyLangError('Wrong number of arguments')
+    variable = rest[0]
+    value = evaluate(rest[1], env)
+    if not is_symbol(variable):
+        raise DiyLangError('{0} is not a symbol')
+    env.set(variable, value)
+    return variable
+
+def control(rest, env):
+    if evaluate(rest[0], env): # predicate
+        return evaluate(rest[1], env) # arg1
+    return evaluate(rest[2], env) # arg2
+
+def quote(rest):
+    return rest[0]
+
+def atom(rest, env):
+    return is_atom(evaluate(rest, env))
+            
 def evaluate(ast, env):
     """Evaluate an Abstract Syntax Tree in the specified environment."""
     if is_list(ast):
         if len(ast) == 0:
             return ast
         first, rest = ast[0], ast[1:]
+        if first == 'define':
+           return define(rest, env)
         if first == 'quote':
-            return rest[0]
+            return quote(rest)
         if first == 'atom':
-            return is_atom(evaluate(rest, env))
+            return atom(rest, env)
         if first == 'if':
-            if evaluate(rest[0], env):
-                return evaluate(rest[1], env)
-            return evaluate(rest[2], env) 
-
-        if first == 'eq': # assumes 2 args to arithmetic and eq operators
-            x = evaluate(rest[0], env)
-            y = evaluate(rest[1], env)
-            return equal(x, y)
+            return control(rest, env)
+        if first == 'eq':
+            return equal(rest, env)
         if first in operators:
-            x = evaluate(rest[0], env)
-            y = evaluate(rest[1], env)
-            return arithmetic(x, y, first)
-        if first == '-':
-            return evaluate(ast[1], env) - evaluate(ast[2], env)
+            return arithmetic(first, rest, env)
         return evaluate(first, env)
-    else:
-        return ast
+    if is_symbol(ast) and not is_boolean(ast):
+        return env.lookup(ast)
+    return ast
 
 
