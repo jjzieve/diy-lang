@@ -64,6 +64,15 @@ def quote(rest):
 
 def atom(rest, env):
     return is_atom(evaluate(rest, env))
+
+def diy_lambda(rest, env):
+    if len(rest) != 2:
+        raise DiyLangError('incorrect number of arguments')
+    if not is_list(rest[0]):
+        raise DiyLangError('lambda parameters must be a list')
+    params = rest[0]
+    body = rest[1]
+    return Closure(env, params, body)
             
 def evaluate(ast, env):
     """Evaluate an Abstract Syntax Tree in the specified environment."""
@@ -71,6 +80,8 @@ def evaluate(ast, env):
         if len(ast) == 0:
             return ast
         first, rest = ast[0], ast[1:]
+        if first == 'lambda':
+            return diy_lambda(rest, env)
         if first == 'define':
            return define(rest, env)
         if first == 'quote':
