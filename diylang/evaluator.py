@@ -62,7 +62,7 @@ def quote(rest):
     return rest[0]
 
 def atom(rest, env):
-    return is_atom(evaluate(rest, env))
+    return is_atom(evaluate(rest[0], env))
 
 def call_closure(closure, args, env):
     if len(args) != len(closure.params):
