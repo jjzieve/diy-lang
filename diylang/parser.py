@@ -13,30 +13,22 @@ the evaluator can understand.
 def parse(source):
     """Parse string representation of one *single* expression
     into the corresponding Abstract Syntax Tree."""
-    ast = []
-    source = remove_comments(source).strip()
-    if source.startswith('('):
+    expression = remove_comments(source).strip()
+    if expression.startswith('('):
         # matching paren should be last index to make sure its the only one expression
-        if (len(source) - 1) != find_matching_paren(source):
+        if (len(expression) - 1) != find_matching_paren(expression):
             raise DiyLangError('Expected EOF')
-        expanded_source = source[1:-1]
-        expressions = split_exps(expanded_source)
-        for exp in expressions:
-            ast.append(parse(exp))
-        return ast
-    if source.startswith('#'):
-        if 't' in source:
-            return True
-        else:
-            return False
-    elif source.startswith('\''):
-        ast.append('quote')
-        ast.append(parse(source[1:]))
-        return ast
-    elif source.isdigit():
-        return int(source)
+        expanded_expression = expression[1:-1]
+        expressions = split_exps(expanded_expression)
+        return [parse(e) for e in expressions]
+    elif expression.startswith('#'):
+        return 't' in expression
+    elif expression.startswith('\''):
+        return ['quote', parse(expression[1:])]
+    elif expression.isdigit():
+        return int(expression)
     else:
-        return source
+        return expression
 #
 # Below are a few useful utility functions. These should come in handy when
 # implementing `parse`. We don't want to spend the day implementing parenthesis
