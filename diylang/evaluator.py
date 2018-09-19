@@ -64,7 +64,9 @@ def quote(rest):
 def atom(rest, env):
     return is_atom(evaluate(rest, env))
 
-def evaluate_closure(closure, args, env):
+def call_closure(closure, args, env):
+    if len(args) != len(closure.params):
+        raise DiyLangError("wrong number of arguments, expected {0} got {1}".format(len(closure.params), len(args)))
     evaluated_args = [evaluate(arg, env) for arg in args]
     new_env = closure.env.extend(dict(zip(closure.params, evaluated_args)))
     return evaluate(closure.body, new_env)
@@ -77,34 +79,38 @@ def create_closure(rest, env):
     params = rest[0]
     body = rest[1]
     return Closure(env, params, body)
-
+    
 operators = ['+', '-', '/', '*', 'mod', '>']
 def evaluate_list(ast, env):
     if len(ast) == 0:
-        return ast
+        raise DiyLangError("failed to evaluate empty list")
+
     first, rest = ast[0], ast[1:]
     if first == 'lambda':
         return create_closure(rest, env)
-    if first == 'define':
+    elif first == 'define':
         return define(rest, env)
-    if first == 'quote':
+    elif first == 'quote':
         return quote(rest)
-    if first == 'atom':
+    elif first == 'atom':
         return atom(rest, env)
-    if first == 'if':
+    elif first == 'if':
         return control(rest, env)
-    if first == 'eq':
+    elif first == 'eq':
         return equal(rest, env)
-    if first in operators:
+    elif first in operators:
         return arithmetic(first, rest, env)
-    if is_closure(first):
-        return evaluate_closure(first, rest, env)
-    return evaluate(first, env)
+    elif is_closure(first):
+        return call_closure(first, rest, env)
+    elif is_symbol(first) or is_list(first): # if variable or list (e.g. lambda), attempt to call/evaluate immediately
+        return evaluate([evaluate(first, env)] + rest, env)
+    else:
+        raise DiyLangError("{0} is not a function".format(first))
             
 def evaluate(ast, env):
     """Evaluate an Abstract Syntax Tree in the specified environment."""
-    if is_list(ast):
-       return evaluate_list(ast, env)
-    if is_symbol(ast) and not is_boolean(ast): # variable
+    if is_symbol(ast):
         return env.lookup(ast)
+    elif is_list(ast):
+        return evaluate_list(ast, env)
     return ast
