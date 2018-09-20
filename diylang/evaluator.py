@@ -14,7 +14,8 @@ making your work a bit easier. (We're supposed to get through this thing
 in a day, after all.)
 """
 
-def equal(rest, env):
+# Helper evaluaters
+def evaluate_equal(rest, env):
     # assumes 2 args
     x = evaluate(rest[0], env)
     y = evaluate(rest[1], env)
@@ -22,28 +23,28 @@ def equal(rest, env):
         return False
     return x == y
 
-def arithmetic(first, rest, env):
-    op = first
+def evaluate_arithmetic(first, rest, env):
+    operator = first
     # assumes 2 args x, y
     x = evaluate(rest[0], env)
     y = evaluate(rest[1], env)
     if not is_integer(x) or not is_integer(y):
         raise DiyLangError('One or more inputs are not Integers')
-    if op == '+':
+    if operator == '+':
         return x + y
-    if op == '-':
+    if operator == '-':
         return x - y
-    if op == '*':
+    if operator == '*':
         return x * y
-    if op == '/':
+    if operator == '/':
         return x // y
-    if op == 'mod':
+    if operator == 'mod':
         return x % y
-    if op == '>':
+    if operator == '>':
         return x > y
-    raise DiyLangError('Operator {0} not supported'.format(op))
+    raise DiyLangError('Operator {0} not supported'.format(operator))
 
-def define(rest, env):
+def evaluate_define(rest, env):
     if len(rest) != 2:
         raise DiyLangError('Wrong number of arguments')
     variable = rest[0]
@@ -53,25 +54,25 @@ def define(rest, env):
     env.set(variable, value)
     return variable
 
-def control(rest, env):
+def evaluate_if(rest, env):
     if evaluate(rest[0], env): # predicate
         return evaluate(rest[1], env) # arg1
     return evaluate(rest[2], env) # arg2
 
-def quote(rest):
+def evaluate_quote(rest):
     return rest[0]
 
-def atom(rest, env):
+def evaluate_atom(rest, env):
     return is_atom(evaluate(rest[0], env))
 
-def call_closure(closure, args, env):
+def call(closure, args, env):
     if len(args) != len(closure.params):
         raise DiyLangError("wrong number of arguments, expected {0} got {1}".format(len(closure.params), len(args)))
     evaluated_args = [evaluate(arg, env) for arg in args]
     new_env = closure.env.extend(dict(zip(closure.params, evaluated_args)))
     return evaluate(closure.body, new_env)
 
-def create_closure(rest, env):
+def evaluate_lambda(rest, env):
     if len(rest) != 2:
         raise DiyLangError('incorrect number of arguments')
     if not is_list(rest[0]):
@@ -80,25 +81,25 @@ def create_closure(rest, env):
     body = rest[1]
     return Closure(env, params, body)
 
-def cons(rest, env):
+def evaluate_cons(rest, env):
     _list = evaluate(rest[1], env)
     new_element = evaluate(rest[0], env)
     _list.insert(0, new_element)
     return _list
 
-def head(rest, env):
+def evaluate_head(rest, env):
     _list = evaluate(rest[0], env)
     if is_list(_list) and len(_list) != 0:
         return _list[0]
     raise DiyLangError("Failed to call head on non-list or empty list")
 
-def tail(rest, env):
+def evaluate_tail(rest, env):
     _list = evaluate(rest[0], env)
     if is_list(_list) and len(_list) != 0:
         return _list[1:]
     raise DiyLangError("Failed to call tail on non-list or empty list")
 
-def empty(rest, env):
+def evaluate_empty(rest, env):
     _list = evaluate(rest[0], env)
     if is_list(_list):
         if len(_list) == 0:
@@ -106,41 +107,41 @@ def empty(rest, env):
         return False
     raise DiyLangError("Failed to call empty on non-list")
 
-operators = ['+', '-', '/', '*', 'mod', '>']
 def evaluate_list(ast, env):
     if len(ast) == 0:
-        raise DiyLangError("failed to evaluate empty list")
-
+        raise DiyLangError("Failed to evaluate empty list")
+    # Check if first is a form/keyword then do some logic on the rest
     first, rest = ast[0], ast[1:]
     if first == 'lambda':
-        return create_closure(rest, env)
+        return evaluate_lambda(rest, env)
     elif first == 'cons':
-        return cons(rest, env)
+        return evaluate_cons(rest, env)
     elif first == 'head':
-        return head(rest, env)
+        return evaluate_head(rest, env)
     elif first == 'tail':
-        return tail(rest, env)
+        return evaluate_tail(rest, env)
     elif first == 'empty':
-        return empty(rest, env)
+        return evaluate_empty(rest, env)
     elif first == 'define':
-        return define(rest, env)
+        return evaluate_define(rest, env)
     elif first == 'quote':
-        return quote(rest)
+        return evaluate_quote(rest)
     elif first == 'atom':
-        return atom(rest, env)
+        return evaluate_atom(rest, env)
     elif first == 'if':
-        return control(rest, env)
+        return evaluate_if(rest, env)
     elif first == 'eq':
-        return equal(rest, env)
-    elif first in operators:
-        return arithmetic(first, rest, env)
-    elif is_closure(first):
-        return call_closure(first, rest, env)
-    elif is_symbol(first) or is_list(first): # if variable or list (e.g. lambda), attempt to call/evaluate immediately
+        return evaluate_equal(rest, env)
+    elif first in ['+', '-', '/', '*', 'mod', '>']:
+        return evaluate_arithmetic(first, rest, env)
+    elif is_closure(first): # Call the closure/function
+        return call(first, rest, env)
+    elif is_symbol(first) or is_list(first): # if variable or another list, attempt to evaluate and call immediately
         return evaluate([evaluate(first, env)] + rest, env)
     else:
         raise DiyLangError("{0} is not a function".format(first))
-            
+
+# Main evaluator
 def evaluate(ast, env):
     """Evaluate an Abstract Syntax Tree in the specified environment."""
     if is_symbol(ast):
