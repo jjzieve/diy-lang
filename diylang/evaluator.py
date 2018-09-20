@@ -79,7 +79,33 @@ def create_closure(rest, env):
     params = rest[0]
     body = rest[1]
     return Closure(env, params, body)
-    
+
+def cons(rest, env):
+    _list = evaluate(rest[1], env)
+    new_element = evaluate(rest[0], env)
+    _list.insert(0, new_element)
+    return _list
+
+def head(rest, env):
+    _list = evaluate(rest[0], env)
+    if is_list(_list) and len(_list) != 0:
+        return _list[0]
+    raise DiyLangError("Failed to call head on non-list or empty list")
+
+def tail(rest, env):
+    _list = evaluate(rest[0], env)
+    if is_list(_list) and len(_list) != 0:
+        return _list[1:]
+    raise DiyLangError("Failed to call tail on non-list or empty list")
+
+def empty(rest, env):
+    _list = evaluate(rest[0], env)
+    if is_list(_list):
+        if len(_list) == 0:
+            return True
+        return False
+    raise DiyLangError("Failed to call empty on non-list")
+
 operators = ['+', '-', '/', '*', 'mod', '>']
 def evaluate_list(ast, env):
     if len(ast) == 0:
@@ -88,6 +114,14 @@ def evaluate_list(ast, env):
     first, rest = ast[0], ast[1:]
     if first == 'lambda':
         return create_closure(rest, env)
+    elif first == 'cons':
+        return cons(rest, env)
+    elif first == 'head':
+        return head(rest, env)
+    elif first == 'tail':
+        return tail(rest, env)
+    elif first == 'empty':
+        return empty(rest, env)
     elif first == 'define':
         return define(rest, env)
     elif first == 'quote':
