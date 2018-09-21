@@ -114,7 +114,7 @@ def evaluate_list(ast, env):
     first, rest = ast[0], ast[1:]
     if first == 'lambda':
         return evaluate_lambda(rest, env)
-    elif first == 'cons':
+    elif first == 'cons': # cons'truct a list
         return evaluate_cons(rest, env)
     elif first == 'head':
         return evaluate_head(rest, env)
