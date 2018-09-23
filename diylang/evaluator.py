@@ -84,8 +84,7 @@ def evaluate_lambda(rest, env):
 def evaluate_cons(rest, env):
     _list = evaluate(rest[1], env)
     new_element = evaluate(rest[0], env)
-    _list.insert(0, new_element)
-    return _list
+    return [new_element] + _list
 
 def evaluate_head(rest, env):
     _list = evaluate(rest[0], env)
