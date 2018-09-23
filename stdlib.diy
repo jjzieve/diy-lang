@@ -67,4 +67,43 @@
             (append (reverse (tail list))
                 (cons (head list) '())))))
 
+(define filter
+    (lambda (function list)
+        (if (empty list)
+            '()
+            (if (function (head list))
+                (cons (head list) (filter function (tail list)))
+                (filter function (tail list))
+            ))))
 
+(define map
+    (lambda (function list)
+        (if (empty list)
+            '()
+            (cons  (function (head list)) (map function (tail list)))
+        )))
+
+(define reduce
+    (lambda (function accumulator list)
+        (if (empty list)
+            accumulator
+            (reduce function 
+                (function accumulator (head list))
+                (tail list)))))
+
+(define filter-lt-or-eq
+    (lambda (list pivot)
+        (filter (lambda (x) (<= x pivot)) list)))
+
+(define filter-gt
+    (lambda (list pivot)
+        (filter (lambda (x) (> x pivot)) list)))
+
+;; Quicksort
+(define sort
+    (lambda (list)
+        (if (empty list)
+            '()
+            (append (sort (filter-lt-or-eq (tail list) (head list)))
+                    (cons (head list)
+                    (sort (filter-gt list (head list))))))))
