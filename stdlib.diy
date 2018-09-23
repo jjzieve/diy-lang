@@ -53,3 +53,18 @@
             (cons start
                 (range (+ 1 start) end)))))
 
+(define append
+    (lambda (list1 list2)
+        (if (empty list1)
+            list2
+            (cons (head list1)
+                (append (tail list1) list2)))))
+
+(define reverse
+    (lambda (list)
+        (if (empty list)
+            '()
+            (append (reverse (tail list))
+                (cons (head list) '())))))
+
+
