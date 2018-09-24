@@ -126,6 +126,12 @@ def evaluate_let(rest, env):
         env = env.extend({name: value})
     return evaluate(expression, env)
 
+def evaluate_defn(rest, env):
+    name = rest[0]
+    function = evaluate(['lambda', rest[1], rest[2]], env)
+    env.set(name, function)
+    return name
+
 def evaluate_list(ast, env):
     if len(ast) == 0:
         raise DiyLangError("Failed to evaluate empty list")
@@ -145,6 +151,8 @@ def evaluate_list(ast, env):
         return evaluate_let(rest, env)
     elif first == 'define':
         return evaluate_define(rest, env)
+    elif first == 'defn':
+        return evaluate_defn(rest, env)
     elif first == 'quote':
         return evaluate_quote(rest)
     elif first == 'atom':
