@@ -86,6 +86,12 @@ def evaluate_cons(rest, env):
     new_element = evaluate(rest[0], env)
     return [new_element] + _list
 
+def evaluate_cond(rest, env):
+    for tup in rest[0]:
+        if evaluate(tup[0], env):
+            return evaluate(tup[1], env)
+    return False
+
 def evaluate_head(rest, env):
     _list = evaluate(rest[0], env)
     if is_list(_list) and len(_list) != 0:
@@ -129,6 +135,8 @@ def evaluate_list(ast, env):
         return evaluate_atom(rest, env)
     elif first == 'if':
         return evaluate_if(rest, env)
+    elif first == 'cond':
+        return evaluate_cond(rest, env)
     elif first == 'eq':
         return evaluate_equal(rest, env)
     elif first in ['+', '-', '/', '*', 'mod', '>']:
