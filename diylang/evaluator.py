@@ -118,6 +118,14 @@ def evaluate_empty(rest, env):
         return item.val == ""
     raise DiyLangError("Failed to call empty on non-list or empty list/string")
 
+def evaluate_let(rest, env):
+    bindings, expression = rest[0], rest[1]
+    for binding in bindings:
+        name = binding[0]
+        value = evaluate(binding[1], env)
+        env = env.extend({name: value})
+    return evaluate(expression, env)
+
 def evaluate_list(ast, env):
     if len(ast) == 0:
         raise DiyLangError("Failed to evaluate empty list")
@@ -132,8 +140,9 @@ def evaluate_list(ast, env):
     elif first == 'tail':
         return evaluate_tail(rest, env)
     elif first == 'empty':
-        print(evaluate_empty(rest, env))
         return evaluate_empty(rest, env)
+    elif first == 'let':
+        return evaluate_let(rest, env)
     elif first == 'define':
         return evaluate_define(rest, env)
     elif first == 'quote':
