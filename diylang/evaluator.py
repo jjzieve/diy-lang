@@ -82,9 +82,11 @@ def evaluate_lambda(rest, env):
     return Closure(env, params, body)
 
 def evaluate_cons(rest, env):
-    _list = evaluate(rest[1], env)
+    item = evaluate(rest[1], env)
     new_element = evaluate(rest[0], env)
-    return [new_element] + _list
+    if is_string(item) and is_string(new_element):
+        return String(new_element.val + item.val)
+    return [new_element] + item
 
 def evaluate_cond(rest, env):
     for tup in rest[0]:
@@ -93,24 +95,28 @@ def evaluate_cond(rest, env):
     return False
 
 def evaluate_head(rest, env):
-    _list = evaluate(rest[0], env)
-    if is_list(_list) and len(_list) != 0:
-        return _list[0]
-    raise DiyLangError("Failed to call head on non-list or empty list")
+    item = evaluate(rest[0], env)
+    if is_list(item) and len(item) != 0:
+        return item[0]
+    if is_string(item) and item.val != "":
+        return String(item.val[0])
+    raise DiyLangError("Failed to call head on non-list or empty list/string")
 
 def evaluate_tail(rest, env):
-    _list = evaluate(rest[0], env)
-    if is_list(_list) and len(_list) != 0:
-        return _list[1:]
-    raise DiyLangError("Failed to call tail on non-list or empty list")
+    item = evaluate(rest[0], env)
+    if is_list(item) and len(item) != 0:
+        return item[1:]
+    if is_string(item) and item.val != "":
+         return String(item.val[1:])
+    raise DiyLangError("Failed to call tail on non-list or empty list/string")
 
 def evaluate_empty(rest, env):
-    _list = evaluate(rest[0], env)
-    if is_list(_list):
-        if len(_list) == 0:
-            return True
-        return False
-    raise DiyLangError("Failed to call empty on non-list")
+    item = evaluate(rest[0], env)
+    if is_list(item):
+        return len(item) == 0
+    if is_string(item):
+        return item.val == ""
+    raise DiyLangError("Failed to call empty on non-list or empty list/string")
 
 def evaluate_list(ast, env):
     if len(ast) == 0:
@@ -126,6 +132,7 @@ def evaluate_list(ast, env):
     elif first == 'tail':
         return evaluate_tail(rest, env)
     elif first == 'empty':
+        print(evaluate_empty(rest, env))
         return evaluate_empty(rest, env)
     elif first == 'define':
         return evaluate_define(rest, env)
